@@ -185,6 +185,9 @@ function toast(m){const t=document.createElement('div');t.className='toast';t.te
 const STATUTS_T=[['todo','À faire'],['doing','En cours'],['wait','En attente'],['done','Terminée']];
 const STATUTS_P=[['actif','Actif'],['pause','En pause'],['idee','Idée / à lancer'],['clos','Clôturé']];
 const PRIOS=[['1','Haute'],['2','Normale'],['3','Basse']];
+const PRIO_HINT={'1':'important — à faire en premier','2':'important, sans urgence particulière','3':'accessoire — à regrouper, déléguer ou abandonner'};
+const prioChip=v=>v==='1'?'<span class="chip red">Priorité haute</span>':v==='2'?'<span class="chip">Priorité normale</span>':v==='3'?'<span class="chip grey">Priorité basse</span>':'';
+const prioSelect=(v,isNew)=>`<select name="prio" required><option value="" disabled ${!v?'selected':''}>— Choisir —</option>${PRIOS.map(([k,l])=>`<option value="${k}" ${v===k?'selected':''}>${l}</option>`).join('')}</select>`;
 const M3=[['','—'],['muda','Muda · gaspillage'],['mura','Mura · irrégularité'],['muri','Muri · surcharge']];
 const M3INFO={
  muda:{t:'Muda',s:'Gaspillage',d:'Tout ce qui consomme du temps sans créer de valeur : attentes, doublons, réunions sans décision, allers-retours, tâches dormantes.'},
@@ -426,7 +429,7 @@ function taskRow(t,showProj){
     ${showProj&&p&&t.axis?`<span class="chip grey">${esc(axisName(p,t.axis))}</span>`:''}
     ${dueChip(t)}${parseFloat(t.est)>0?`<span class="chip grey">⏱ ${fmtH(+t.est)}</span>`:''}
     ${t.status==='doing'?'<span class="chip">En cours</span>':''}${t.status==='wait'?'<span class="chip amber">En attente</span>':''}
-    ${t.prio==='1'?'<span class="chip red">Priorité haute</span>':''}
+    ${prioChip(t.prio)}
     ${t.m3?`<span class="chip m-${t.m3}">${M3INFO[t.m3].t}</span>`:''}
     ${t.mid&&Mt(t.mid)?`<span class="chip grey">↳ réunion</span>`:''}
    </div></div></div>`;
@@ -518,12 +521,12 @@ function repoBlock(p){if(!p.repo)return'';if(!repoCache[p.id]){repoCache[p.id]={
 function pAxes(p){
   const ts=S.tasks.filter(t=>t.pid===p.id);
   const filt=t=>(UI.fStat==='all'||(UI.fStat==='open'?t.status!=='done':t.status===UI.fStat));
-  const axes=[...p.axes];const orphans=ts.filter(t=>!t.axis||!p.axes.find(a=>a.id===t.axis));
+  const axes=[...p.axes].sort((x,y)=>(x.prio||'4').localeCompare(y.prio||'4'));const orphans=ts.filter(t=>!t.axis||!p.axes.find(a=>a.id===t.axis));
   const shownAxes=UI.fAxis?axes.filter(a=>a.id===UI.fAxis):axes;
   const axisBlock=(a,list)=>{const all=list;const done=all.filter(t=>t.status==='done').length;const shown=sortTasks(all.filter(filt));
     return`<details class="axis" ${a&&a.closed?'':'open'} data-axis="${a?a.id:''}">
      <summary data-act="axisToggle" data-id="${a?a.id:''}">${ico('car','i car')}<h3 style="flex:1">${esc(a?a.name:'Sans axe')}</h3>
-      <span class="chip grey">${done}/${all.length}</span>
+      ${a?(a.prio?prioChip(a.prio):`<span class="chip amber" data-act="editAxis" data-id="${a.id}">Priorité à définir</span>`):''}<span class="chip grey">${done}/${all.length}</span>
       ${a?`<button class="btn ghost sm" data-act="editAxis" data-id="${a.id}" title="Renommer">${ico('edit')}</button>`:''}</summary>
      <div class="body">${a&&a.goal?`<p class="hint" style="margin:0 0 6px">Objectif : ${esc(a.goal)}</p>`:''}
       <div class="list">${shown.length?shown.map(t=>taskRow(t,false)).join(''):'<div class="hint" style="padding:6px">Aucune tâche dans ce filtre.</div>'}</div>
@@ -657,14 +660,14 @@ function vSettings(){
 function modal(html){$('#modalRoot').innerHTML=`<div class="modal-bg" data-act="closeBg"><div class="modal">${html}</div></div>`;const f=$('#modalRoot input[type=text]');if(f&&window.innerWidth>760)f.focus()}
 function closeModal(){$('#modalRoot').innerHTML=''}
 function taskModal(t,defaults){
-  const isNew=!t;t=t||Object.assign({status:'todo',prio:'2',m3:''},defaults||{});
+  const isNew=!t;t=t||Object.assign({status:'todo',prio:'',m3:''},defaults||{});
   const pid=t.pid||UI.pid||(S.projects[0]||{}).id;const p=P(pid);
   modal(`<h2>${isNew?'Nouvelle tâche':'Modifier la tâche'}</h2><form data-act="saveTask" data-id="${t.id||''}">
    <div class="fld"><label class="f">Intitulé</label><input type="text" name="title" required value="${esc(t.title)}"></div>
    <div class="grid g2"><div class="fld"><label class="f">Projet</label><select name="pid" data-act="taskProj">${S.projects.map(x=>`<option value="${x.id}" ${x.id===pid?'selected':''}>${esc(x.name)}</option>`).join('')}</select></div>
     <div class="fld"><label class="f">Axe / sous-projet</label><select name="axis" id="axisSel">${axisOpts(p,t.axis)}</select></div></div>
    <div class="grid g3"><div class="fld"><label class="f">Statut</label><select name="status">${STATUTS_T.map(([k,l])=>`<option value="${k}" ${t.status===k?'selected':''}>${l}</option>`).join('')}</select></div>
-    <div class="fld"><label class="f">Priorité</label><select name="prio">${PRIOS.map(([k,l])=>`<option value="${k}" ${t.prio===k?'selected':''}>${l}</option>`).join('')}</select></div>
+    <div class="fld"><label class="f">Priorité *</label>${prioSelect(t.prio)}</div>
     <div class="fld"><label class="f">Échéance</label><input type="date" name="due" value="${esc(t.due)}"></div></div>
    <div class="grid g2"><div class="fld"><label class="f">Temps estimé (heures)</label><input type="number" name="est" min="0" step="0.25" value="${esc(t.est)}" placeholder="${S.settings.defEst}"></div>
     <div class="fld"><label class="f">Levier 3M (si tâche d’amélioration)</label><select name="m3">${M3.map(([k,l])=>`<option value="${k}" ${(t.m3||'')===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
@@ -696,12 +699,13 @@ function meetingModal(m,pid){
 function actLine(){
   const pid=($('#modalRoot select[name=pid]')||{}).value;const p=P(pid);
   const d=document.createElement('div');d.className='addline actline';d.style.flexWrap='wrap';
-  d.innerHTML=`<input type="text" data-k="title" placeholder="Action…" style="flex:2 1 200px"><select data-k="axis" style="flex:1 1 140px">${axisOpts(p,'')}</select><input type="date" data-k="due" style="flex:1 1 130px">`;
+  d.innerHTML=`<input type="text" data-k="title" placeholder="Action…" style="flex:2 1 200px"><select data-k="axis" style="flex:1 1 140px">${axisOpts(p,'')}</select><select data-k="prio" style="flex:1 1 120px"><option value="">Priorité *</option>${PRIOS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select><input type="date" data-k="due" style="flex:1 1 130px">`;
   $('#newActs').appendChild(d);d.querySelector('input').focus();
 }
 function axisModal(p,a){
   modal(`<h2>${a?'Modifier l’axe':'Nouvel axe / sous-projet'}</h2><form data-act="saveAxis" data-id="${a?a.id:''}">
    <div class="fld"><label class="f">Nom</label><input type="text" name="name" required value="${esc(a&&a.name)}" placeholder="ex. Recherche, Clinique, Rédaction, Financement…"></div>
+   <div class="fld"><label class="f">Priorité de l’axe *</label>${prioSelect(a&&a.prio)}<p class="hint" style="margin:4px 0 0">Haute : ${PRIO_HINT['1']} · Normale : ${PRIO_HINT['2']} · Basse : ${PRIO_HINT['3']}</p></div>
    <div class="fld"><label class="f">Objectif de l’axe (optionnel)</label><input type="text" name="goal" value="${esc(a&&a.goal)}"></div>
    <div class="row">${a?`<button type="button" class="btn danger" data-act="delAxis" data-id="${a.id}">${ico('trash')}Supprimer</button>`:''}${a?`<button type="button" class="btn" data-act="moveAxis" data-id="${a.id}" data-d="-1">↑</button><button type="button" class="btn" data-act="moveAxis" data-id="${a.id}" data-d="1">↓</button>`:''}<span class="sp"></span>
    <button type="button" class="btn" data-act="close">Annuler</button><button class="btn pri">Enregistrer</button></div></form>`);
@@ -755,6 +759,12 @@ document.addEventListener('click',e=>{
    case'wipe':confirmBox('Effacer TOUTES les données ? (exportez avant)').then(ok=>{if(ok){S=EMPTY();commit();}});break;
   }
 });
+function pickPrio(title,what){return new Promise(res=>{const r=document.createElement('div');r.className='modal-bg';r.style.zIndex=70;
+  r.innerHTML=`<div class="modal" style="max-width:440px"><h2>Priorité ${what||'de la tâche'}</h2><p style="margin:0 0 14px"><b>${esc(title)}</b></p>
+   <div class="grid" style="gap:8px">${PRIOS.map(([k,l])=>`<button class="btn" data-p="${k}" style="justify-content:flex-start;padding:12px 14px;border-left:5px solid ${k==='1'?'var(--red)':k==='2'?'var(--blue)':'#9fb0c6'}"><b>${l}</b><span class="hint" style="margin-left:8px">${PRIO_HINT[k]}</span></button>`).join('')}</div>
+   <div class="row" style="margin-top:12px"><span class="sp"></span><button class="btn ghost" data-p="">Annuler</button></div></div>`;
+  r.addEventListener('click',e=>{e.stopPropagation();const b=e.target.closest('[data-p]');if(b||e.target===r){r.remove();res(b?b.dataset.p:'')}});
+  document.body.appendChild(r);const f=r.querySelector('[data-p="1"]');if(f)f.focus()})}
 function confirmBox(m){return new Promise(res=>{const r=document.createElement('div');r.className='modal-bg';r.style.zIndex=70;
   r.innerHTML=`<div class="modal" style="max-width:420px"><p style="margin:0 0 16px">${esc(m)}</p><div class="row"><span class="sp"></span><button class="btn" data-x="0">Annuler</button><button class="btn pri" data-x="1">Confirmer</button></div></div>`;
   r.addEventListener('click',e=>{e.stopPropagation();const b=e.target.closest('[data-x]');if(b||e.target===r){r.remove();res(!!(b&&b.dataset.x==='1'))}});document.body.appendChild(r)})}
@@ -784,15 +794,18 @@ document.addEventListener('submit',e=>{
     if(id){const t=T(id);if(base.status==='done'&&t.status!=='done')base.doneAt=nowISO();Object.assign(t,base)}else S.tasks.push(Object.assign({id:uid(),created:nowISO()},base));
     closeModal();commit();
   }else if(a==='quickAdd'){
-    if(!d.title.trim())return;S.tasks.push({id:uid(),pid:UI.pid,axis:f.dataset.axis,title:d.title.trim(),due:d.due||'',status:'todo',prio:'2',m3:'',created:nowISO(),mod:nowISO()});
-    commit();const nf=document.querySelector(`form[data-act=quickAdd][data-axis="${f.dataset.axis}"] input`);if(nf)nf.focus();
+    if(!d.title.trim())return;const ax=f.dataset.axis;
+    pickPrio(d.title.trim()).then(pr=>{if(!pr)return;S.tasks.push({id:uid(),pid:UI.pid,axis:ax,title:d.title.trim(),due:d.due||'',status:'todo',prio:pr,m3:'',created:nowISO()});
+      commit();const nf=document.querySelector(`form[data-act=quickAdd][data-axis="${ax}"] input`);if(nf)nf.focus();});
   }else if(a==='saveAxis'){
-    const p=P(UI.pid);if(id){Object.assign(p.axes.find(x=>x.id===id),{name:d.name.trim(),goal:d.goal})}else p.axes.push({id:uid(),name:d.name.trim(),goal:d.goal});closeModal();commit();
+    const p=P(UI.pid);if(id){Object.assign(p.axes.find(x=>x.id===id),{name:d.name.trim(),goal:d.goal,prio:d.prio})}else p.axes.push({id:uid(),name:d.name.trim(),goal:d.goal,prio:d.prio});closeModal();commit();
   }else if(a==='saveMeeting'){
+    const miss=[...document.querySelectorAll('#modalRoot .actline')].filter(l=>l.querySelector('[data-k=title]').value.trim()&&!l.querySelector('[data-k=prio]').value);
+    if(miss.length){toast('Choisissez la priorité de chaque action');miss[0].querySelector('[data-k=prio]').focus();return}
     let m=id?Mt(id):null;const fields={title:d.title.trim(),pid:d.pid,date:d.date,who:d.who,where:d.where,agenda:d.agenda,notes:d.notes,decisions:d.decisions,mod:nowISO()};
     if(m)Object.assign(m,fields);else{m=Object.assign({id:uid(),actions:[],created:nowISO()},fields);S.meetings.push(m)}
     document.querySelectorAll('#modalRoot .actline').forEach(l=>{const t=l.querySelector('[data-k=title]').value.trim();if(!t)return;
-      const tk={id:uid(),pid:m.pid,axis:l.querySelector('[data-k=axis]').value,title:t,due:l.querySelector('[data-k=due]').value,status:'todo',prio:'2',m3:'',mid:m.id,created:nowISO(),mod:nowISO()};S.tasks.push(tk);m.actions.push(tk.id)});
+      const tk={id:uid(),pid:m.pid,axis:l.querySelector('[data-k=axis]').value,title:t,due:l.querySelector('[data-k=due]').value,status:'todo',prio:l.querySelector('[data-k=prio]').value,m3:'',mid:m.id,created:nowISO(),mod:nowISO()};S.tasks.push(tk);m.actions.push(tk.id)});
     closeModal();commit();toast('Réunion enregistrée');
   }else if(a==='saveReview'){
     const p=P(f.dataset.pid);const done=REVIEW_Q.filter((_,n)=>d['q'+n]).length;
