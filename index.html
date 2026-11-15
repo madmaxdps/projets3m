@@ -8,6 +8,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Projets 3M">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -142,6 +144,60 @@ input[type=password]{border:1px solid var(--line);border-radius:8px;padding:8px 
 .chk{display:flex;gap:8px;align-items:flex-start;padding:5px 0;font-size:14px}.chk input{margin-top:3px}
 @media (max-width:760px){.quad{grid-template-columns:1fr}}
 svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ===== Habillage moderne ===== */
+:root{--bg:#f4f6fb;--line:#e4e9f1;--muted:#66768c;--r:14px;--sh:0 1px 2px rgba(16,35,63,.04),0 6px 20px rgba(16,35,63,.05)}
+body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14.5px;letter-spacing:-.005em}
+h1{font-size:24px;font-weight:700;letter-spacing:-.02em} h2{font-size:16px;font-weight:650;letter-spacing:-.01em} h3{font-weight:600}
+nav.side{background:linear-gradient(180deg,#0f2a4a 0%,#123a63 100%);padding:20px 14px}
+nav.side button{border-radius:10px;font-weight:500}
+.card{border-radius:var(--r);border-color:var(--line);box-shadow:var(--sh);padding:18px}
+.btn{border-radius:10px;font-weight:500;padding:8px 14px;transition:background .15s,border-color .15s,box-shadow .15s}
+.btn.pri{box-shadow:0 2px 6px rgba(29,95,168,.25)}
+input[type=text],input[type=date],input[type=datetime-local],input[type=number],input[type=password],select,textarea{border-radius:10px;border-color:var(--line);transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#8fb3dd;box-shadow:0 0 0 3px rgba(29,95,168,.12)}
+.chip{font-size:11.5px;font-weight:500;padding:2px 9px}
+.tabs{border:0;background:#e9eef6;border-radius:12px;padding:4px;gap:2px;display:inline-flex;max-width:100%}
+.tabs button{border:0;border-radius:9px;margin:0;padding:8px 14px;font-weight:500}
+.tabs button.on{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(16,35,63,.12)}
+details.axis{border-radius:var(--r);overflow:hidden}
+details.axis>summary{padding:14px 16px}
+details.axis>summary h3{font-size:15px}
+details.axis .body{padding:0 10px 10px}
+.axprog{width:70px;height:5px;border-radius:9px;background:#e8edf3;overflow:hidden}.axprog i{display:block;height:100%;background:var(--green)}
+.pdot{width:9px;height:9px;border-radius:50%;flex:none;background:#c3cddb}.pdot.p1{background:var(--red)}.pdot.p2{background:var(--blue)}.pdot.p3{background:#b4bfcd}
+/* tâches : une ligne claire, métadonnées compactes à droite */
+.list{gap:2px}
+.task{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:10px 12px;border:0;border-radius:10px;position:relative;background:transparent}
+.task::before{content:"";position:absolute;left:0;top:9px;bottom:9px;width:3px;border-radius:3px;background:transparent}
+.task.p1::before{background:var(--red)}.task.p2::before{background:var(--blue)}.task.p3::before{background:#c3cddb}
+.task:hover{background:#f2f6fb}
+.task+.task{border-top:1px solid #eef2f7}
+.task .t{min-width:0}
+.task .tt{font-weight:500;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.task .sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task .tags{display:flex;gap:6px;align-items:center;justify-content:flex-end;flex-wrap:nowrap}
+.task .tag{font-size:12px;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:4px}
+.task .due{font-size:12px;font-weight:600;padding:3px 9px;border-radius:8px;background:#eef2f7;color:#4a5b72;white-space:nowrap}
+.task .due.late{background:var(--red-l);color:var(--red)}.task .due.today{background:var(--amber-l);color:var(--amber)}.task .due.soon{background:var(--blue-l);color:var(--blue)}
+.task .st{width:8px;height:8px;border-radius:50%}.task .st.doing{background:var(--blue)}.task .st.wait{background:var(--amber)}
+.task.done .tt{text-decoration:line-through;color:var(--muted);font-weight:400}.task.done::before{background:transparent}
+.ck{width:20px;height:20px;border-radius:50%;border:2px solid #b5c2d3;margin:0;transition:all .15s}
+.ck:hover{border-color:var(--green);background:var(--green-l)}
+.ck.on::after{width:5px;height:9px}
+.addline input[type=text]{border-style:dashed;background:#fafbfd}
+.addline{padding:4px 2px 2px}
+.remind{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.remind:first-of-type{border-top:0}
+.remind .sw{width:12px;height:12px;border-radius:4px}
+details.axis>summary{flex-wrap:wrap;row-gap:6px}details.axis>summary h3{flex:1 1 40%!important;min-width:0;overflow-wrap:break-word;word-break:normal}
+@media (max-width:760px){h1{font-size:20px}main{overflow-wrap:break-word}.tabs button{padding:7px 11px}}
+@media (max-width:640px){
+  .task{grid-template-columns:auto 1fr;row-gap:6px}
+  .task .tags{grid-column:2;justify-content:flex-start;flex-wrap:wrap}
+  .tabs{display:flex;overflow-x:auto}
+  .remind{grid-template-columns:auto 1fr}.remind .btn{grid-column:2;justify-self:start}
+}
 </style>
 </head>
 <body>
@@ -343,7 +399,7 @@ async function doLogin(d){
       }
       localStorage.setItem(LS_CFG,JSON.stringify({user:USER,salt:B64.enc(SALT),tok:await Cry.enc(KEY,{t:TOKEN})}));
     }
-    document.body.classList.remove('locked');resnap();render();await Store.sync();
+    document.body.classList.remove('locked');resnap();render();await Store.sync();remindModal();
     if(Store.seedSha){try{await GHApi.del(GH.seed,Store.seedSha)}catch(e){}Store.seedSha=null}
     armLock();
   }catch(e){KEY=null;loginView(e.message,pendingNew?'new':'')}
@@ -419,20 +475,27 @@ function render(){
   m.innerHTML=v==='dash'?vDash():v==='projects'?vProjects():v==='project'?vProject():v==='meetings'?vMeetings():v==='m3'?vM3():vSettings();
   $('#fab').style.display=(v==='settings')?'none':'';
 }
+function dueTag(t){
+  if(!t.due)return'';const d=daysBetween(todayStr(),t.due);
+  if(t.status==='done')return`<span class="due">${fmtD(t.due)}</span>`;
+  if(d<0)return`<span class="due late" title="En retard">${fmtD(t.due)}</span>`;
+  if(d===0)return`<span class="due today">Aujourd’hui</span>`;
+  if(d===1)return`<span class="due soon">Demain</span>`;
+  return`<span class="due ${d<=7?'soon':''}">${fmtD(t.due)}</span>`;
+}
 function taskRow(t,showProj){
   const p=P(t.pid);
-  const ckc=t.status==='done'?'on':t.status==='doing'?'doing':'';
-  return`<div class="task ${t.status==='done'?'done':''}" data-act="editTask" data-id="${t.id}">
-   <div class="ck ${ckc}" data-act="toggle" data-id="${t.id}" title="Terminer"></div>
-   <div class="t"><div class="tt">${esc(t.title)}</div><div class="meta">
-    ${showProj&&p?`<span class="chip" style="background:${p.color}1a;color:${p.color}">${esc(p.name)}</span>`:''}
-    ${showProj&&p&&t.axis?`<span class="chip grey">${esc(axisName(p,t.axis))}</span>`:''}
-    ${dueChip(t)}${parseFloat(t.est)>0?`<span class="chip grey">⏱ ${fmtH(+t.est)}</span>`:''}
-    ${t.status==='doing'?'<span class="chip">En cours</span>':''}${t.status==='wait'?'<span class="chip amber">En attente</span>':''}
-    ${prioChip(t.prio)}
+  const ckc=t.status==='done'?'on':'';
+  const sub=[showProj&&p?p.name:'',showProj&&p&&t.axis?axisName(p,t.axis):'',t.mid&&Mt(t.mid)?'issue de réunion':''].filter(Boolean).join(' · ');
+  return`<div class="task p${esc(t.prio||'')} ${t.status==='done'?'done':''}" data-act="editTask" data-id="${t.id}" title="${esc(t.title)}">
+   <div class="ck ${ckc}" data-act="toggle" data-id="${t.id}" title="Marquer comme terminée"></div>
+   <div class="t"><div class="tt">${esc(t.title)}</div>${sub?`<div class="sub">${showProj&&p?`<span style="color:${p.color}">●</span> `:''}${esc(sub)}</div>`:''}</div>
+   <div class="tags">
+    ${t.status==='doing'?'<span class="tag"><i class="st doing"></i>En cours</span>':''}${t.status==='wait'?'<span class="tag"><i class="st wait"></i>En attente</span>':''}
     ${t.m3?`<span class="chip m-${t.m3}">${M3INFO[t.m3].t}</span>`:''}
-    ${t.mid&&Mt(t.mid)?`<span class="chip grey">↳ réunion</span>`:''}
-   </div></div></div>`;
+    ${parseFloat(t.est)>0?`<span class="tag">⏱ ${fmtH(+t.est)}</span>`:''}
+    ${dueTag(t)}
+   </div></div>`;
 }
 function sortTasks(a){return a.sort((x,y)=>(x.status==='done')-(y.status==='done')||(x.due||'9999').localeCompare(y.due||'9999')||x.prio.localeCompare(y.prio))}
 
@@ -454,6 +517,7 @@ function vDash(){
   </div>
   <div class="grid g2 sect">
    <div class="card"><h2>À traiter en priorité</h2>
+    ${(()=>{const l=staleProjects();return l.length?`<div class="row" style="gap:6px;margin-bottom:8px"><span class="hint">Non ouverts depuis ${STALE_H} h :</span>${l.map(p=>`<span class="chip amber" data-act="openProject" data-id="${p.id}" style="cursor:pointer">${esc(p.name.split(' — ')[0])}</span>`).join('')}</div>`:''})()}
     ${(()=>{const r=S.projects.filter(p=>p.status==='actif'&&reviewDue(p));return r.length?`<div class="row" style="gap:6px;margin-bottom:8px"><span class="hint">Revue 3M à faire :</span>${r.map(p=>`<span class="chip m-mura" data-act="openProjectM3" data-id="${p.id}" style="cursor:pointer">${esc(p.name.split(' — ')[0])}</span>`).join('')}</div>`:''})()}
     ${overdue.length||week.length||prioNoDate.length?`<div class="list">${[...overdue,...week,...prioNoDate].slice(0,14).map(t=>taskRow(t,true)).join('')}</div>`:'<div class="empty">Rien d’urgent. Belle journée.</div>'}
    </div>
@@ -525,7 +589,7 @@ function pAxes(p){
   const shownAxes=UI.fAxis?axes.filter(a=>a.id===UI.fAxis):axes;
   const axisBlock=(a,list)=>{const all=list;const done=all.filter(t=>t.status==='done').length;const shown=sortTasks(all.filter(filt));
     return`<details class="axis" ${a&&a.closed?'':'open'} data-axis="${a?a.id:''}">
-     <summary data-act="axisToggle" data-id="${a?a.id:''}">${ico('car','i car')}<h3 style="flex:1">${esc(a?a.name:'Sans axe')}</h3>
+     <summary data-act="axisToggle" data-id="${a?a.id:''}">${ico('car','i car')}<span class="pdot p${a&&a.prio||''}"></span><h3 style="flex:1">${esc(a?a.name:'Sans axe')}</h3><span class="axprog hide-m"><i style="width:${all.length?Math.round(100*done/all.length):0}%"></i></span>
       ${a?(a.prio?prioChip(a.prio):`<span class="chip amber" data-act="editAxis" data-id="${a.id}">Priorité à définir</span>`):''}<span class="chip grey">${done}/${all.length}</span>
       ${a?`<button class="btn ghost sm" data-act="editAxis" data-id="${a.id}" title="Renommer">${ico('edit')}</button>`:''}</summary>
      <div class="body">${a&&a.goal?`<p class="hint" style="margin:0 0 6px">Objectif : ${esc(a.goal)}</p>`:''}
@@ -605,6 +669,18 @@ function m3Block(p){
    ${p?`<form class="addline" data-act="addObs" data-k="${k}" data-pid="${p.id}" style="flex-wrap:wrap"><input type="text" name="text" placeholder="Constat…" required><input type="text" name="cm" placeholder="Contre-mesure (optionnel)"><button class="btn sm">${ico('plus')}Ajouter</button></form>`:''}
   </div>`).join('')}</div>
   ${(()=>{const tk=S.tasks.filter(t=>t.m3&&t.status!=='done'&&(!p||t.pid===p.id));return tk.length?`<div class="card sect"><h2>Tâches d’amélioration 3M ouvertes</h2><div class="list">${sortTasks(tk).map(t=>taskRow(t,!p)).join('')}</div></div>`:''})()}`;
+}
+const STALE_H=48;
+function staleProjects(){return S.projects.filter(p=>p.status==='actif'&&(!p.opened||Date.now()-Date.parse(p.opened)>STALE_H*3600e3))}
+function sinceTxt(iso){if(!iso)return'jamais ouvert';const h=Math.floor((Date.now()-Date.parse(iso))/3600e3);return h<48?`ouvert il y a ${h} h`:`ouvert il y a ${Math.floor(h/24)} jours`}
+function projStats(p){const o=openTasks().filter(t=>t.pid===p.id);const late=o.filter(t=>t.due&&t.due<todayStr()).length;
+  const nx=o.filter(t=>t.due&&t.due>=todayStr()).sort((a,b)=>a.due.localeCompare(b.due))[0];
+  return`${o.length} tâche(s) ouverte(s)${late?` · <b style="color:var(--red)">${late} en retard</b>`:''}${nx?` · prochaine échéance ${fmtD(nx.due)}`:''}`}
+function remindModal(){
+  const l=staleProjects();if(!l.length)return;
+  modal(`<h2>Projets à revoir</h2><p class="hint" style="margin-top:-6px">Projets actifs non ouverts depuis plus de ${STALE_H} h.</p>
+   ${l.map(p=>`<div class="remind"><span class="sw" style="background:${p.color}"></span><div><b>${esc(p.name)}</b><div class="hint">${sinceTxt(p.opened)} · ${projStats(p)}</div></div><button class="btn sm pri" data-act="openProject" data-id="${p.id}">Ouvrir</button></div>`).join('')}
+   <div class="row" style="margin-top:14px"><span class="sp"></span><button class="btn" data-act="close">Plus tard</button></div>`);
 }
 function reviewDue(p){const r=(p.reviews||[])[0];return !r||daysBetween(r.date,todayStr())>=7}
 function quadrant(t){const urgent=!!t.due&&daysBetween(todayStr(),t.due)<=7;const imp=t.prio!=='3';return imp&&urgent?'do':imp?'plan':urgent?'deleg':'elim'}
@@ -725,8 +801,8 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;const a=el.dataset.act,id=el.dataset.id;
   switch(a){
    case'nav':UI.view=el.dataset.v;UI.pid=null;window.scrollTo(0,0);render();break;
-   case'openProject':UI.view='project';UI.pid=id;UI.ptab='axes';UI.fAxis='';window.scrollTo(0,0);render();break;
-   case'openProjectM3':UI.view='project';UI.pid=id;UI.ptab='m3';window.scrollTo(0,0);render();break;
+   case'openProject':closeModal();{const pp=P(id);if(pp){pp.opened=nowISO();Store.save()}}UI.view='project';UI.pid=id;UI.ptab='axes';UI.fAxis='';window.scrollTo(0,0);render();break;
+   case'openProjectM3':{const pp=P(id);if(pp){pp.opened=nowISO();Store.save()}}UI.view='project';UI.pid=id;UI.ptab='m3';window.scrollTo(0,0);render();break;
    case'ptab':UI.ptab=el.dataset.v;render();break;
    case'newProject':newProject();break;
    case'newTask':if(!S.projects.length){toast('Créez d’abord un projet');newProject();break}taskModal(null);break;
