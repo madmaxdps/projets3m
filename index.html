@@ -145,6 +145,18 @@ input[type=password]{border:1px solid var(--line);border-radius:8px;padding:8px 
 @media (max-width:760px){.quad{grid-template-columns:1fr}}
 svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
+/* ===== Dernières avancées (tableau de bord) ===== */
+.news{margin:4px 0 22px}
+.newsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.newscard{background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);padding:18px 20px 16px;border-top:5px solid var(--pc);cursor:pointer;display:flex;flex-direction:column;gap:8px;transition:transform .15s,box-shadow .15s}
+.newscard:hover{transform:translateY(-2px);box-shadow:0 4px 10px rgba(16,35,63,.08),0 14px 30px rgba(16,35,63,.08)}
+.newscard .nh{display:flex;gap:10px;align-items:baseline;justify-content:space-between}
+.newscard .np{font-size:12.5px;font-weight:700;color:var(--pc);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.newscard .nd{font-size:12.5px;color:var(--muted);white-space:nowrap}
+.newscard .nt{font-size:13.5px;font-weight:600;color:#4a5b72}
+.newscard .nx{font-size:17px;line-height:1.5;color:var(--ink);white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
+.newscard .nf{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:auto;padding-top:4px}
+@media (max-width:640px){.newsgrid{grid-template-columns:1fr}.newscard .nx{font-size:16px}}
 /* ===== Journal ===== */
 .task .last{font-size:12.5px;color:#4a5b72;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .task .last b{font-weight:600;color:var(--green)}
@@ -540,6 +552,16 @@ function taskRow(t,showProj){
 }
 function sortTasks(a){return a.sort((x,y)=>(x.status==='done')-(y.status==='done')||(x.due||'9999').localeCompare(y.due||'9999')||x.prio.localeCompare(y.prio))}
 
+function newsBlock(){
+  const l=allLogs().slice(0,6);
+  return`<section class="news"><div class="row" style="margin-bottom:12px"><h2 style="margin:0;font-size:19px">Dernières avancées</h2><span class="sp"></span>${l.length?`<span class="hint">${allLogs().length} au total</span>`:''}</div>
+  ${l.length?`<div class="newsgrid">${l.map(e=>`<article class="newscard" style="--pc:${e.p.color}" data-act="${e.t?'editTask':'openProject'}" data-id="${e.t?e.t.id:e.p.id}">
+    <div class="nh"><span class="np">${esc(e.p.name.split(' — ')[0])}</span><span class="nd">${relD(e.d)} · ${new Date(e.d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span></div>
+    ${e.t?`<div class="nt">${esc(e.t.title)}</div>`:'<div class="nt">Note de projet</div>'}
+    <div class="nx">${esc(e.txt)}</div>
+    ${+e.h||(e.pct!=null&&e.pct!=='')?`<div class="nf">${+e.h?`<span>⏱ ${fmtH(+e.h)}</span>`:''}${e.pct!=null&&e.pct!==''?`<span class="pct"><i><b style="width:${+e.pct}%"></b></i>${e.pct} %</span>`:''}</div>`:''}
+   </article>`).join('')}</div>`:`<div class="card empty" style="font-size:15px">Aucune avancée notée pour l’instant.<br>Cliquez sur <b>« Noter »</b> à côté d’une tâche pour écrire ce que vous avez fait : cela s’affichera ici, en grand.</div>`}</section>`;
+}
 function vDash(){
   if(!S.projects.length)return welcome();
   const today=todayStr();const ot=openTasks();
@@ -550,6 +572,7 @@ function vDash(){
   const ind=indicators();const wl=weeklyLoad(4);const mx=Math.max(ind.cap,...wl.map(w=>w.c),1);
   const d=new Date();const jours=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
   return`<h1>Bonjour</h1><p class="sub">${jours[d.getDay()]} ${fmtD(today)} · ${S.projects.filter(p=>p.status==='actif').length} projets actifs</p>
+  ${newsBlock()}
   <div class="grid g4">
    <div class="card kpi blue"><div class="n">${ot.length}</div><div class="l">tâches ouvertes</div></div>
    <div class="card kpi ${overdue.length?'red':'green'}"><div class="n">${overdue.length}</div><div class="l">en retard</div></div>
@@ -567,7 +590,6 @@ function vDash(){
      <div class="bars">${wl.map((w,i)=>`<div class="b"><em>${fmtH(w.c)}</em><i class="${w.c>ind.cap?'over':''}" style="height:${Math.round(90*w.c/mx)}%"></i><span>${i===0?'Cette sem.':'S. '+fmtD(w.a)}</span></div>`).join('')}</div>
      <p class="hint" style="margin:8px 0 0">Capacité réglée : ${fmtH(ind.cap)} / semaine consacrées aux projets (tâches sans durée = ${fmtH(+S.settings.defEst||1)}). Les retards sont reportés sur la semaine en cours.</p>
     </div>
-    <div class="card"><h2>Activité récente</h2>${(()=>{const l=allLogs().slice(0,6);return l.length?`<div class="tl">${l.map(e=>logEntry(e,true)).join('')}</div>`:'<div class="hint">Notez vos avancées avec le bouton « Noter » d’une tâche.</div>'})()}</div>
     <div class="card"><div class="row"><h2 style="margin:0">Prochaines réunions</h2><span class="sp"></span><button class="btn sm" data-act="newMeeting">${ico('plus')}Réunion</button></div>
      ${upc.length?upc.map(meetRow).join(''):'<div class="empty">Aucune réunion planifiée.</div>'}
     </div>
