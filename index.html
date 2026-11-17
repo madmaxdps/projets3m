@@ -145,6 +145,19 @@ input[type=password]{border:1px solid var(--line);border-radius:8px;padding:8px 
 @media (max-width:760px){.quad{grid-template-columns:1fr}}
 svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
 
+/* ===== Journal ===== */
+.task .last{font-size:12.5px;color:#4a5b72;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.task .last b{font-weight:600;color:var(--green)}
+.task .logbtn{opacity:0;transition:opacity .15s}.task:hover .logbtn{opacity:1}
+.pct{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--muted)}.pct i{display:block;width:34px;height:5px;border-radius:9px;background:#e8edf3;overflow:hidden;position:relative}.pct i b{position:absolute;inset:0 auto 0 0;background:var(--green)}
+.tl{position:relative;padding-left:18px}.tl::before{content:"";position:absolute;left:5px;top:6px;bottom:6px;width:2px;background:#e4e9f1;border-radius:2px}
+.tle{position:relative;padding:8px 0 10px}.tle::before{content:"";position:absolute;left:-17px;top:13px;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid var(--blue)}
+.tle.proj::before{border-color:var(--violet)}
+.tle .h{font-size:12px;color:var(--muted);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.tle .x{white-space:pre-wrap;margin-top:3px;line-height:1.45}
+.tle .del{opacity:.0;transition:opacity .15s}.tle:hover .del{opacity:1}
+.range{display:flex;align-items:center;gap:10px}.range input{flex:1;accent-color:var(--green)}.range b{min-width:44px;text-align:right}
+@media (max-width:640px){.task .logbtn{opacity:1}.tle .del{opacity:1}}
 /* ===== Habillage moderne ===== */
 :root{--bg:#f4f6fb;--line:#e4e9f1;--muted:#66768c;--r:14px;--sh:0 1px 2px rgba(16,35,63,.04),0 6px 20px rgba(16,35,63,.05)}
 body{font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14.5px;letter-spacing:-.005em}
@@ -236,7 +249,7 @@ const MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.',
 const fmtD=s=>{if(!s)return'';const d=new Date(s.length>10?s:s+'T12:00:00');return d.getDate()+' '+MOIS[d.getMonth()]+(d.getFullYear()!==new Date().getFullYear()?' '+d.getFullYear():'')};
 const fmtDT=s=>{if(!s)return'';const d=new Date(s);return fmtD(s)+' · '+String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0')};
 const weekStart=s=>{const d=new Date(s+'T12:00:00');const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return d.toISOString().slice(0,10)};
-function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
+function toast(m){document.querySelectorAll('.toast').forEach(x=>x.remove());const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2200)}
 
 const STATUTS_T=[['todo','À faire'],['doing','En cours'],['wait','En attente'],['done','Terminée']];
 const STATUTS_P=[['actif','Actif'],['pause','En pause'],['idee','Idée / à lancer'],['clos','Clôturé']];
@@ -346,8 +359,8 @@ let syncTxt='';
 function setSync(t){if(t)syncTxt=t;const el=$('#syncTxt');if(el)el.textContent=syncTxt}
 function normalize(d){
   const e=EMPTY();d=Object.assign(e,d||{});d.settings=Object.assign(EMPTY().settings,d.settings||{});d.tomb=d.tomb||{};
-  d.projects.forEach(p=>{p.axes=p.axes||[];p.obs=p.obs||[];p.reviews=p.reviews||[];p.status=p.status||'actif'});
-  d.tasks.forEach(t=>{t.status=t.status||'todo';t.prio=String(t.prio||'2')});
+  d.projects.forEach(p=>{p.log=p.log||[];p.axes=p.axes||[];p.obs=p.obs||[];p.reviews=p.reviews||[];p.status=p.status||'actif'});
+  d.tasks.forEach(t=>{t.status=t.status||'todo';t.prio=String(t.prio||'2');t.log=t.log||[]});
   d.meetings.forEach(m=>{m.actions=m.actions||[]});
   return d;
 }
@@ -429,7 +442,7 @@ const T=id=>S.tasks.find(t=>t.id===id);
 const Mt=id=>S.meetings.find(m=>m.id===id);
 const axisName=(p,aid)=>{const a=p&&p.axes.find(a=>a.id===aid);return a?a.name:'Sans axe'};
 const openTasks=()=>S.tasks.filter(t=>t.status!=='done'&&(P(t.pid)||{}).status!=='clos');
-function progress(pid){const ts=S.tasks.filter(t=>t.pid===pid);if(!ts.length)return 0;return Math.round(100*ts.filter(t=>t.status==='done').length/ts.length)}
+function progress(pid){const ts=S.tasks.filter(t=>t.pid===pid);if(!ts.length)return 0;return Math.round(ts.reduce((a,t)=>a+(t.status==='done'?100:(+t.pct||0)),0)/ts.length)}
 function dueChip(t){
   if(!t.due)return'';const d=daysBetween(todayStr(),t.due);
   if(t.status==='done')return`<span class="chip grey">${fmtD(t.due)}</span>`;
@@ -475,6 +488,32 @@ function render(){
   m.innerHTML=v==='dash'?vDash():v==='projects'?vProjects():v==='project'?vProject():v==='meetings'?vMeetings():v==='m3'?vM3():vSettings();
   $('#fab').style.display=(v==='settings')?'none':'';
 }
+const relD=iso=>{const d=daysBetween(iso.slice(0,10),todayStr());return d<=0?'aujourd’hui':d===1?'hier':d<7?`il y a ${d} j`:fmtD(iso)};
+const lastLog=t=>(t.log||[]).slice().sort((a,b)=>b.d.localeCompare(a.d))[0];
+const spent=t=>(t.log||[]).reduce((a,e)=>a+(+e.h||0),0);
+function allLogs(pid){const out=[];for(const p of S.projects){if(pid&&p.id!==pid)continue;for(const e of p.log||[])out.push({...e,p,t:null})}
+  for(const t of S.tasks){if(pid&&t.pid!==pid)continue;const p=P(t.pid);if(!p)continue;for(const e of t.log||[])out.push({...e,p,t})}
+  return out.sort((a,b)=>b.d.localeCompare(a.d))}
+function logEntry(e,showProj,inTask){return`<div class="tle ${e.t?'':'proj'}"><div class="h"><b style="color:var(--ink)">${relD(e.d)}</b><span>${new Date(e.d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span>
+  ${showProj?`<span style="color:${e.p.color}">● ${esc(e.p.name.split(' — ')[0])}</span>`:''}${inTask?'':e.t?`<a href="#" data-act="editTask" data-id="${e.t.id}" style="color:var(--blue)">${esc(e.t.title.length>60?e.t.title.slice(0,60)+'…':e.t.title)}</a>`:'<span class="chip violet">Projet</span>'}
+  ${+e.h?`<span>⏱ ${fmtH(+e.h)}</span>`:''}${e.pct!=null&&e.pct!==''?`<span>→ ${e.pct} %</span>`:''}
+  <span class="sp"></span><button class="btn ghost sm del" data-act="delLog" data-id="${e.id}" data-tid="${e.t?e.t.id:''}" data-pid="${e.p.id}" title="Supprimer">${ico('trash')}</button></div>
+  <div class="x">${esc(e.txt)}</div></div>`}
+function logModal(tid,pid){
+  const t=tid?T(tid):null;const p=P(t?t.pid:pid);
+  modal(`<h2>Noter une avancée</h2><p class="hint" style="margin-top:-8px">${t?`Tâche : <b>${esc(t.title)}</b>`:`Projet : <b>${esc(p.name)}</b>`}</p>
+   <form data-act="saveLog" data-tid="${t?t.id:''}" data-pid="${p.id}">
+    ${!t?`<div class="fld"><label class="f">Rattacher à une tâche (optionnel)</label><select name="tid"><option value="">— Note générale du projet —</option>${sortTasks(S.tasks.filter(x=>x.pid===p.id&&x.status!=='done')).map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('')}</select></div>`:''}
+    <div class="fld"><label class="f">Ce que j’ai fait *</label><textarea name="txt" required placeholder="ex. Appel du Dr X : accord de principe, envoi du protocole v2 lundi." style="min-height:110px"></textarea></div>
+    <div class="grid g2"><div class="fld"><label class="f">Temps passé (h)</label><input type="number" name="h" min="0" step="0.25" placeholder="optionnel"></div>
+     ${t?`<div class="fld"><label class="f">Avancement de la tâche</label><div class="range"><input type="range" name="pct" min="0" max="100" step="10" value="${+t.pct||0}" oninput="this.nextElementSibling.textContent=this.value+' %'"><b>${+t.pct||0} %</b></div></div>`:'<div></div>'}</div>
+    ${t?`<div class="grid g2"><div class="fld"><label class="f">Nouveau statut</label><select name="status">${STATUTS_T.map(([k,l])=>`<option value="${k}" ${t.status===k?'selected':''}>${l}</option>`).join('')}</select></div><div></div></div>`:''}
+    <div class="fld"><label class="f">Prochaine étape (crée une nouvelle tâche, optionnel)</label><input type="text" name="next" placeholder="ex. Relancer la DSI vendredi"></div>
+    <div class="grid g3" id="nextOpts"><div class="fld"><label class="f">Priorité de la prochaine étape</label><select name="nprio"><option value="">— Choisir —</option>${PRIOS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>
+     <div class="fld"><label class="f">Échéance</label><input type="date" name="ndue"></div><div class="fld"><label class="f">Temps estimé (h)</label><input type="number" name="nest" min="0" step="0.25"></div></div>
+    <div class="row"><span class="sp"></span><button type="button" class="btn" data-act="close">Annuler</button><button class="btn pri">Enregistrer</button></div></form>`);
+  const ta=$('#modalRoot textarea[name=txt]');if(ta)ta.focus();
+}
 function dueTag(t){
   if(!t.due)return'';const d=daysBetween(todayStr(),t.due);
   if(t.status==='done')return`<span class="due">${fmtD(t.due)}</span>`;
@@ -489,12 +528,14 @@ function taskRow(t,showProj){
   const sub=[showProj&&p?p.name:'',showProj&&p&&t.axis?axisName(p,t.axis):'',t.mid&&Mt(t.mid)?'issue de réunion':''].filter(Boolean).join(' · ');
   return`<div class="task p${esc(t.prio||'')} ${t.status==='done'?'done':''}" data-act="editTask" data-id="${t.id}" title="${esc(t.title)}">
    <div class="ck ${ckc}" data-act="toggle" data-id="${t.id}" title="Marquer comme terminée"></div>
-   <div class="t"><div class="tt">${esc(t.title)}</div>${sub?`<div class="sub">${showProj&&p?`<span style="color:${p.color}">●</span> `:''}${esc(sub)}</div>`:''}</div>
+   <div class="t"><div class="tt">${esc(t.title)}</div>${(()=>{const l=lastLog(t);return l?`<div class="last"><b>↳ ${relD(l.d)}</b> · ${esc(l.txt.split('\n')[0])}</div>`:''})()}${sub?`<div class="sub">${showProj&&p?`<span style="color:${p.color}">●</span> `:''}${esc(sub)}</div>`:''}</div>
    <div class="tags">
     ${t.status==='doing'?'<span class="tag"><i class="st doing"></i>En cours</span>':''}${t.status==='wait'?'<span class="tag"><i class="st wait"></i>En attente</span>':''}
     ${t.m3?`<span class="chip m-${t.m3}">${M3INFO[t.m3].t}</span>`:''}
-    ${parseFloat(t.est)>0?`<span class="tag">⏱ ${fmtH(+t.est)}</span>`:''}
+    ${+t.pct&&t.status!=='done'?`<span class="pct"><i><b style="width:${+t.pct}%"></b></i>${+t.pct} %</span>`:''}
+    ${parseFloat(t.est)>0?`<span class="tag">⏱ ${spent(t)?fmtH(spent(t))+' / ':''}${fmtH(+t.est)}</span>`:spent(t)?`<span class="tag">⏱ ${fmtH(spent(t))}</span>`:''}
     ${dueTag(t)}
+    ${t.status!=='done'?`<button class="btn sm logbtn" data-act="logTask" data-id="${t.id}" title="Noter une avancée">${ico('edit')}<span class="hide-m">Noter</span></button>`:''}
    </div></div>`;
 }
 function sortTasks(a){return a.sort((x,y)=>(x.status==='done')-(y.status==='done')||(x.due||'9999').localeCompare(y.due||'9999')||x.prio.localeCompare(y.prio))}
@@ -526,6 +567,7 @@ function vDash(){
      <div class="bars">${wl.map((w,i)=>`<div class="b"><em>${fmtH(w.c)}</em><i class="${w.c>ind.cap?'over':''}" style="height:${Math.round(90*w.c/mx)}%"></i><span>${i===0?'Cette sem.':'S. '+fmtD(w.a)}</span></div>`).join('')}</div>
      <p class="hint" style="margin:8px 0 0">Capacité réglée : ${fmtH(ind.cap)} / semaine consacrées aux projets (tâches sans durée = ${fmtH(+S.settings.defEst||1)}). Les retards sont reportés sur la semaine en cours.</p>
     </div>
+    <div class="card"><h2>Activité récente</h2>${(()=>{const l=allLogs().slice(0,6);return l.length?`<div class="tl">${l.map(e=>logEntry(e,true)).join('')}</div>`:'<div class="hint">Notez vos avancées avec le bouton « Noter » d’une tâche.</div>'})()}</div>
     <div class="card"><div class="row"><h2 style="margin:0">Prochaines réunions</h2><span class="sp"></span><button class="btn sm" data-act="newMeeting">${ico('plus')}Réunion</button></div>
      ${upc.length?upc.map(meetRow).join(''):'<div class="empty">Aucune réunion planifiée.</div>'}
     </div>
@@ -559,9 +601,9 @@ function pCard(p){
 }
 function vProject(){
   const p=P(UI.pid);if(!p){UI.view='projects';return vProjects()}
-  const tabs=[['axes','Axes & tâches'],['prio','Priorisation'],['m3','Revue 3M'],['meetings','Réunions'],['info','Fiche projet']];
+  const tabs=[['axes','Axes & tâches'],['log','Journal'],['prio','Priorisation'],['m3','Revue 3M'],['meetings','Réunions'],['info','Fiche projet']];
   let body='';
-  if(UI.ptab==='axes')body=pAxes(p);else if(UI.ptab==='prio')body=eisen(p);else if(UI.ptab==='meetings')body=pMeetings(p);else if(UI.ptab==='m3')body=reviewBlock(p)+m3Block(p);else body=pInfo(p);
+  if(UI.ptab==='axes')body=pAxes(p);else if(UI.ptab==='log')body=pLog(p);else if(UI.ptab==='prio')body=eisen(p);else if(UI.ptab==='meetings')body=pMeetings(p);else if(UI.ptab==='m3')body=reviewBlock(p)+m3Block(p);else body=pInfo(p);
   return`<button class="btn ghost sm" data-act="nav" data-v="projects">${ico('back')}Projets</button>
   <div class="row" style="margin-top:6px"><span style="width:14px;height:14px;border-radius:4px;background:${p.color}"></span><h1 style="margin:0">${esc(p.name)}</h1>
    <span class="chip ${p.status==='actif'?'green':'grey'}">${lab(STATUTS_P,p.status)}</span><span class="sp"></span>
@@ -618,6 +660,9 @@ function meetRow(m){
      ${past&&!(m.decisions||'').trim()&&!acts.length?'<span class="chip m-muda">CR à compléter</span>':''}
     </div></div></div>`;
 }
+function pLog(p){const l=allLogs(p.id);const h=l.reduce((a,e)=>a+(+e.h||0),0);
+  return`<div class="row" style="margin-bottom:12px"><span class="hint">${l.length} entrée(s)${h?` · ${fmtH(h)} consignées`:''}</span><span class="sp"></span><button class="btn pri" data-act="logProject" data-id="${p.id}">${ico('plus')}Noter une avancée</button></div>
+  <div class="card">${l.length?`<div class="tl">${l.map(e=>logEntry(e,false)).join('')}</div>`:'<div class="empty">Rien de noté pour l’instant. Utilisez « Noter une avancée » ou le bouton « Noter » sur une tâche.</div>'}</div>`}
 function pMeetings(p){
   const ms=S.meetings.filter(m=>m.pid===p.id).sort((a,b)=>(b.date||'').localeCompare(a.date||''));
   return`<div class="row" style="margin-bottom:10px"><span class="sp"></span><button class="btn pri" data-act="newMeeting" data-pid="${p.id}">${ico('plus')}Nouvelle réunion</button></div>
@@ -747,7 +792,9 @@ function taskModal(t,defaults){
     <div class="fld"><label class="f">Échéance</label><input type="date" name="due" value="${esc(t.due)}"></div></div>
    <div class="grid g2"><div class="fld"><label class="f">Temps estimé (heures)</label><input type="number" name="est" min="0" step="0.25" value="${esc(t.est)}" placeholder="${S.settings.defEst}"></div>
     <div class="fld"><label class="f">Levier 3M (si tâche d’amélioration)</label><select name="m3">${M3.map(([k,l])=>`<option value="${k}" ${(t.m3||'')===k?'selected':''}>${l}</option>`).join('')}</select></div></div>
-   <div class="fld"><label class="f">Notes</label><textarea name="notes">${esc(t.notes)}</textarea></div>
+   <div class="fld"><label class="f">Notes de fond</label><textarea name="notes" style="min-height:60px">${esc(t.notes)}</textarea></div>
+   ${!isNew?`<div class="fld"><div class="row" style="margin-bottom:6px"><label class="f" style="margin:0">Journal d’avancement${spent(t)?` · ${fmtH(spent(t))} passées`:''}${+t.pct?` · ${+t.pct} %`:''}</label><span class="sp"></span><button type="button" class="btn sm pri" data-act="logTask" data-id="${t.id}">${ico('plus')}Noter une avancée</button></div>
+    ${(t.log||[]).length?`<div class="tl">${allLogs(t.pid).filter(e=>e.t&&e.t.id===t.id).map(e=>logEntry(e,false,true)).join('')}</div>`:'<p class="hint" style="margin:0">Aucune avancée notée pour l’instant.</p>'}</div>`:''}
    ${t.mid&&Mt(t.mid)?`<p class="hint">Issue de la réunion « ${esc(Mt(t.mid).title)} » du ${fmtD(Mt(t.mid).date)}</p>`:''}
    <div class="row">${!isNew?`<button type="button" class="btn danger" data-act="delTask" data-id="${t.id}">${ico('trash')}Supprimer</button>`:''}<span class="sp"></span>
     <button type="button" class="btn" data-act="close">Annuler</button><button class="btn pri">Enregistrer</button></div></form>`);
@@ -806,7 +853,12 @@ document.addEventListener('click',e=>{
    case'ptab':UI.ptab=el.dataset.v;render();break;
    case'newProject':newProject();break;
    case'newTask':if(!S.projects.length){toast('Créez d’abord un projet');newProject();break}taskModal(null);break;
-   case'editTask':taskModal(T(id));break;
+   case'editTask':e.preventDefault();taskModal(T(id));break;
+   case'logTask':e.stopPropagation();logModal(id);break;
+   case'logProject':logModal(null,id);break;
+   case'delLog':{e.preventDefault();e.stopPropagation();const tid=el.dataset.tid,pid=el.dataset.pid;confirmBox('Supprimer cette entrée du journal ?').then(ok=>{if(!ok)return;
+     if(tid){const t=T(tid);t.log=t.log.filter(x=>x.id!==id)}else{const p=P(pid);p.log=p.log.filter(x=>x.id!==id)}
+     const open=$('#modalRoot form[data-act=saveTask]');commit();if(open&&tid)taskModal(T(tid));});break;}
    case'toggle':e.stopPropagation();toggleTask(id);break;
    case'newMeeting':e.stopPropagation();if(!S.projects.length){toast('Créez d’abord un projet');newProject();break}meetingModal(null,el.dataset.pid);break;
    case'editMeeting':meetingModal(Mt(id));break;
@@ -888,6 +940,14 @@ document.addEventListener('submit',e=>{
     p.reviews.unshift({date:todayStr(),done,notes:(d.notes||'').trim()});p.reviews=p.reviews.slice(0,26);
     if((d.next||'').trim())S.tasks.push({id:uid(),pid:p.id,axis:'',title:d.next.trim(),due:addDays(todayStr(),3),est:d.est,status:'todo',prio:'1',m3:'',created:nowISO()});
     commit();toast('Revue 3M enregistrée');
+  }else if(a==='saveLog'){
+    const tid=f.dataset.tid||d.tid||'';const pid=f.dataset.pid;const entry={id:uid(),d:nowISO(),txt:d.txt.trim(),h:d.h||''};
+    if((d.next||'').trim()&&!d.nprio){toast('Choisissez la priorité de la prochaine étape');f.querySelector('[name=nprio]').focus();return}
+    if(tid){const t=T(tid);if(f.dataset.tid){entry.pct=d.pct;t.pct=d.pct;if(d.status){if(d.status==='done'&&t.status!=='done')t.doneAt=nowISO();t.status=d.status}if(+d.pct===100&&t.status!=='done'){t.status='done';t.doneAt=nowISO()}}
+      t.log=[...(t.log||[]),entry]}
+    else{const p=P(pid);p.log=[...(p.log||[]),entry]}
+    if((d.next||'').trim()){const src=tid?T(tid):null;S.tasks.push({id:uid(),pid,axis:src?src.axis:'',title:d.next.trim(),due:d.ndue||'',est:d.nest||'',status:'todo',prio:d.nprio,m3:'',created:nowISO(),log:[]})}
+    closeModal();commit();toast('Avancée enregistrée');
   }else if(a==='addObs'){
     P(f.dataset.pid).obs.push({id:uid(),k:f.dataset.k,text:d.text.trim(),cm:d.cm.trim(),date:todayStr()});commit();
   }else if(a==='saveSettings'){
