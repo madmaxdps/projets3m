@@ -157,6 +157,9 @@ svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke
 .newscard .nx{font-size:17px;line-height:1.5;color:var(--ink);white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:6;-webkit-box-orient:vertical;overflow:hidden}
 .newscard .nf{display:flex;gap:14px;font-size:13px;color:var(--muted);margin-top:auto;padding-top:4px}
 @media (max-width:640px){.newsgrid{grid-template-columns:1fr}.newscard .nx{font-size:16px}}
+ul.pts{margin:2px 0 0;padding-left:1.15em}ul.pts li{margin:2px 0;padding-left:2px}ul.pts li::marker{color:var(--pc,var(--blue));font-size:1.1em}ul.pts li.more{list-style:none;margin-left:-1.15em;color:var(--muted);font-size:.85em}
+.newscard .nx{display:block!important;-webkit-line-clamp:unset!important}
+textarea.bullets{line-height:1.6;font-size:15px}
 /* ===== Journal ===== */
 .task .last{font-size:12.5px;color:#4a5b72;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .task .last b{font-weight:600;color:var(--green)}
@@ -500,6 +503,9 @@ function render(){
   m.innerHTML=v==='dash'?vDash():v==='projects'?vProjects():v==='project'?vProject():v==='meetings'?vMeetings():v==='m3'?vM3():vSettings();
   $('#fab').style.display=(v==='settings')?'none':'';
 }
+const pts=txt=>String(txt||'').split('\n').map(l=>l.replace(/^\s*([-•*·–]|\d+[.)])\s*/,'').trim()).filter(Boolean);
+function fmtPts(txt,max){const l=pts(txt);const v=max&&l.length>max?l.slice(0,max):l;
+  return`<ul class="pts">${v.map(x=>`<li>${esc(x)}</li>`).join('')}${max&&l.length>max?`<li class="more">+ ${l.length-max} autre(s) point(s)</li>`:''}</ul>`}
 const relD=iso=>{const d=daysBetween(iso.slice(0,10),todayStr());return d<=0?'aujourd’hui':d===1?'hier':d<7?`il y a ${d} j`:fmtD(iso)};
 const lastLog=t=>(t.log||[]).slice().sort((a,b)=>b.d.localeCompare(a.d))[0];
 const spent=t=>(t.log||[]).reduce((a,e)=>a+(+e.h||0),0);
@@ -510,13 +516,13 @@ function logEntry(e,showProj,inTask){return`<div class="tle ${e.t?'':'proj'}"><d
   ${showProj?`<span style="color:${e.p.color}">● ${esc(e.p.name.split(' — ')[0])}</span>`:''}${inTask?'':e.t?`<a href="#" data-act="editTask" data-id="${e.t.id}" style="color:var(--blue)">${esc(e.t.title.length>60?e.t.title.slice(0,60)+'…':e.t.title)}</a>`:'<span class="chip violet">Projet</span>'}
   ${+e.h?`<span>⏱ ${fmtH(+e.h)}</span>`:''}${e.pct!=null&&e.pct!==''?`<span>→ ${e.pct} %</span>`:''}
   <span class="sp"></span><button class="btn ghost sm del" data-act="delLog" data-id="${e.id}" data-tid="${e.t?e.t.id:''}" data-pid="${e.p.id}" title="Supprimer">${ico('trash')}</button></div>
-  <div class="x">${esc(e.txt)}</div></div>`}
+  <div class="x">${fmtPts(e.txt)}</div></div>`}
 function logModal(tid,pid){
   const t=tid?T(tid):null;const p=P(t?t.pid:pid);
   modal(`<h2>Noter une avancée</h2><p class="hint" style="margin-top:-8px">${t?`Tâche : <b>${esc(t.title)}</b>`:`Projet : <b>${esc(p.name)}</b>`}</p>
    <form data-act="saveLog" data-tid="${t?t.id:''}" data-pid="${p.id}">
     ${!t?`<div class="fld"><label class="f">Rattacher à une tâche (optionnel)</label><select name="tid"><option value="">— Note générale du projet —</option>${sortTasks(S.tasks.filter(x=>x.pid===p.id&&x.status!=='done')).map(x=>`<option value="${x.id}">${esc(x.title)}</option>`).join('')}</select></div>`:''}
-    <div class="fld"><label class="f">Ce que j’ai fait *</label><textarea name="txt" required placeholder="ex. Appel du Dr X : accord de principe, envoi du protocole v2 lundi." style="min-height:110px"></textarea></div>
+    <div class="fld"><label class="f">Ce que j’ai fait * <span style="font-weight:400">— un point par ligne (Entrée = nouveau point)</span></label><textarea name="txt" class="bullets" required style="min-height:130px">• </textarea></div>
     <div class="grid g2"><div class="fld"><label class="f">Temps passé (h)</label><input type="number" name="h" min="0" step="0.25" placeholder="optionnel"></div>
      ${t?`<div class="fld"><label class="f">Avancement de la tâche</label><div class="range"><input type="range" name="pct" min="0" max="100" step="10" value="${+t.pct||0}" oninput="this.nextElementSibling.textContent=this.value+' %'"><b>${+t.pct||0} %</b></div></div>`:'<div></div>'}</div>
     ${t?`<div class="grid g2"><div class="fld"><label class="f">Nouveau statut</label><select name="status">${STATUTS_T.map(([k,l])=>`<option value="${k}" ${t.status===k?'selected':''}>${l}</option>`).join('')}</select></div><div></div></div>`:''}
@@ -524,7 +530,7 @@ function logModal(tid,pid){
     <div class="grid g3" id="nextOpts"><div class="fld"><label class="f">Priorité de la prochaine étape</label><select name="nprio"><option value="">— Choisir —</option>${PRIOS.map(([k,l])=>`<option value="${k}">${l}</option>`).join('')}</select></div>
      <div class="fld"><label class="f">Échéance</label><input type="date" name="ndue"></div><div class="fld"><label class="f">Temps estimé (h)</label><input type="number" name="nest" min="0" step="0.25"></div></div>
     <div class="row"><span class="sp"></span><button type="button" class="btn" data-act="close">Annuler</button><button class="btn pri">Enregistrer</button></div></form>`);
-  const ta=$('#modalRoot textarea[name=txt]');if(ta)ta.focus();
+  const ta=$('#modalRoot textarea[name=txt]');if(ta){ta.focus();ta.setSelectionRange(ta.value.length,ta.value.length)}
 }
 function dueTag(t){
   if(!t.due)return'';const d=daysBetween(todayStr(),t.due);
@@ -540,7 +546,7 @@ function taskRow(t,showProj){
   const sub=[showProj&&p?p.name:'',showProj&&p&&t.axis?axisName(p,t.axis):'',t.mid&&Mt(t.mid)?'issue de réunion':''].filter(Boolean).join(' · ');
   return`<div class="task p${esc(t.prio||'')} ${t.status==='done'?'done':''}" data-act="editTask" data-id="${t.id}" title="${esc(t.title)}">
    <div class="ck ${ckc}" data-act="toggle" data-id="${t.id}" title="Marquer comme terminée"></div>
-   <div class="t"><div class="tt">${esc(t.title)}</div>${(()=>{const l=lastLog(t);return l?`<div class="last"><b>↳ ${relD(l.d)}</b> · ${esc(l.txt.split('\n')[0])}</div>`:''})()}${sub?`<div class="sub">${showProj&&p?`<span style="color:${p.color}">●</span> `:''}${esc(sub)}</div>`:''}</div>
+   <div class="t"><div class="tt">${esc(t.title)}</div>${(()=>{const l=lastLog(t);return l?`<div class="last"><b>↳ ${relD(l.d)}</b> · ${esc(pts(l.txt)[0]||'')}${pts(l.txt).length>1?` <span style="color:var(--muted)">(+${pts(l.txt).length-1})</span>`:''}</div>`:''})()}${sub?`<div class="sub">${showProj&&p?`<span style="color:${p.color}">●</span> `:''}${esc(sub)}</div>`:''}</div>
    <div class="tags">
     ${t.status==='doing'?'<span class="tag"><i class="st doing"></i>En cours</span>':''}${t.status==='wait'?'<span class="tag"><i class="st wait"></i>En attente</span>':''}
     ${t.m3?`<span class="chip m-${t.m3}">${M3INFO[t.m3].t}</span>`:''}
@@ -558,7 +564,7 @@ function newsBlock(){
   ${l.length?`<div class="newsgrid">${l.map(e=>`<article class="newscard" style="--pc:${e.p.color}" data-act="${e.t?'editTask':'openProject'}" data-id="${e.t?e.t.id:e.p.id}">
     <div class="nh"><span class="np">${esc(e.p.name.split(' — ')[0])}</span><span class="nd">${relD(e.d)} · ${new Date(e.d).toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}</span></div>
     ${e.t?`<div class="nt">${esc(e.t.title)}</div>`:'<div class="nt">Note de projet</div>'}
-    <div class="nx">${esc(e.txt)}</div>
+    <div class="nx">${fmtPts(e.txt,5)}</div>
     ${+e.h||(e.pct!=null&&e.pct!=='')?`<div class="nf">${+e.h?`<span>⏱ ${fmtH(+e.h)}</span>`:''}${e.pct!=null&&e.pct!==''?`<span class="pct"><i><b style="width:${+e.pct}%"></b></i>${e.pct} %</span>`:''}</div>`:''}
    </article>`).join('')}</div>`:`<div class="card empty" style="font-size:15px">Aucune avancée notée pour l’instant.<br>Cliquez sur <b>« Noter »</b> à côté d’une tâche pour écrire ce que vous avez fait : cela s’affichera ici, en grand.</div>`}</section>`;
 }
@@ -963,9 +969,10 @@ document.addEventListener('submit',e=>{
     if((d.next||'').trim())S.tasks.push({id:uid(),pid:p.id,axis:'',title:d.next.trim(),due:addDays(todayStr(),3),est:d.est,status:'todo',prio:'1',m3:'',created:nowISO()});
     commit();toast('Revue 3M enregistrée');
   }else if(a==='saveLog'){
-    const tid=f.dataset.tid||d.tid||'';const pid=f.dataset.pid;const entry={id:uid(),d:nowISO(),txt:d.txt.trim(),h:d.h||''};
+    const tid=f.dataset.tid||d.tid||'';const pid=f.dataset.pid;const entry={id:uid(),d:nowISO(),txt:pts(d.txt).map(x=>'• '+x).join('\n'),h:d.h||''};
+    if(!pts(d.txt).length){toast('Écrivez au moins un point');return}
     if((d.next||'').trim()&&!d.nprio){toast('Choisissez la priorité de la prochaine étape');f.querySelector('[name=nprio]').focus();return}
-    if(tid){const t=T(tid);if(f.dataset.tid){entry.pct=d.pct;t.pct=d.pct;if(d.status){if(d.status==='done'&&t.status!=='done')t.doneAt=nowISO();t.status=d.status}if(+d.pct===100&&t.status!=='done'){t.status='done';t.doneAt=nowISO()}}
+    if(tid){const t=T(tid);if(f.dataset.tid){if(String(+d.pct||0)!==String(+t.pct||0)){entry.pct=d.pct;t.pct=d.pct};if(d.status){if(d.status==='done'&&t.status!=='done')t.doneAt=nowISO();t.status=d.status}if(+d.pct===100&&t.status!=='done'){t.status='done';t.doneAt=nowISO()}}
       t.log=[...(t.log||[]),entry]}
     else{const p=P(pid);p.log=[...(p.log||[]),entry]}
     if((d.next||'').trim()){const src=tid?T(tid):null;S.tasks.push({id:uid(),pid,axis:src?src.axis:'',title:d.next.trim(),due:d.ndue||'',est:d.nest||'',status:'todo',prio:d.nprio,m3:'',created:nowISO(),log:[]})}
@@ -977,6 +984,10 @@ document.addEventListener('submit',e=>{
   }
 });
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModal()});
+document.addEventListener('keydown',e=>{const ta=e.target;if(!ta.classList||!ta.classList.contains('bullets')||e.key!=='Enter'||e.shiftKey||e.isComposing)return;
+  e.preventDefault();const a=ta.selectionStart,b=ta.selectionEnd;const line=ta.value.slice(0,a).split('\n').pop();
+  if(line.trim()==='•'){ta.value=ta.value.slice(0,a-line.length).replace(/\n$/,'')+ta.value.slice(b);const n=ta.form.querySelector('input[name=h]');if(n)n.focus();return}
+  ta.value=ta.value.slice(0,a)+'\n• '+ta.value.slice(b);ta.selectionStart=ta.selectionEnd=a+3;});
 
 boot();
 </script>
